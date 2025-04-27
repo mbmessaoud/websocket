@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Minimal WebSocket Client</title>
+</head>
+<body>
+  <h1>WebSocket Client</h1>
+  <div>
+  <input type="text" id="url" value="wss://echo.websocket.org">
+  <button id="connect">Connect</button>
+  <p id="status"></p>
+  </div>
+   <div>
+  <input type="text" id="messageInput" placeholder="Enter a message">
+  <button id="send">Send</button>
+   </div>
+  <div id="messages"></div>
+
+  <script>
+    // Replace with your WebSocket server URL if needed
+    const input = document.getElementById('messageInput');
+    const url = document.getElementById('url');
+    const messages = document.getElementById('messages');
+    const connectBtn = document.getElementById('connect');
+    const status = document.getElementById('status');
+    
+    let socket=null; // Declare the variable in a shared scope
+
+    connectBtn.addEventListener('click', connect);
+    document.getElementById('send').addEventListener('click', sendMessage);
+ 
+   
+    function sendMessage() {
+      socket.send(input.value);
+      input.value = '';
+    }    
+    
+    function connect() {
+        if (socket === null)
+        {
+            socket= new WebSocket(url.value);
+            status.textContent = "Connected to " + url.value;
+            connectBtn.innerText = "Close";
+            socket.onmessage = (event) => {
+                const message = document.createElement('p');
+                message.textContent = event.data;
+                messages.appendChild(message);
+            };
+        }
+        else
+        {
+            status.textContent = "";
+            messages.textContent='';
+            socket.close();
+            socket = null;
+            connectBtn.innerText = "Connect";
+
+        }
+    }
+  </script>
+</body>
+</html>
