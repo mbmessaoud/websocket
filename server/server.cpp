@@ -49,7 +49,7 @@ int main(int argc, char *argv[]) {
                     uint16_t code){
             std::cout << "WebSocket closed: " << reason << " (" << code << ")"
                         << std::endl;
-            if ( code == crow::websocket::NormalClosure )
+            if ( code != crow::websocket::ClosedAbnormally )
             {
                 conn.close();
             }

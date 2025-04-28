@@ -18,46 +18,80 @@
   <div id="messages"></div>
 
   <script>
-    // Replace with your WebSocket server URL if needed
-    const input = document.getElementById('messageInput');
-    const url = document.getElementById('url');
-    const messages = document.getElementById('messages');
-    const connectBtn = document.getElementById('connect');
-    const status = document.getElementById('status');
-    
-    let socket=null; // Declare the variable in a shared scope
+const input = document.getElementById('messageInput');
+const url = document.getElementById('url');
+const messages = document.getElementById('messages');
+const connectBtn = document.getElementById('connect');
+const status = document.getElementById('status');
+const sendBtn = document.getElementById('send');
 
-    connectBtn.addEventListener('click', connect);
-    document.getElementById('send').addEventListener('click', sendMessage);
- 
-   
-    function sendMessage() {
-      socket.send(input.value);
-      input.value = '';
-    }    
-    
-    function connect() {
-        if (socket === null)
-        {
-            socket= new WebSocket(url.value);
-            status.textContent = "Connected to " + url.value;
-            connectBtn.innerText = "Close";
+let socket = null;
+
+connectBtn.addEventListener('click', connect);
+sendBtn.addEventListener('click', sendMessage);
+input.addEventListener('keypress', (event) => {
+    if (event.key === 'Enter') {
+        sendMessage();
+    }
+});
+
+function updateSendButtonState() {
+    sendBtn.disabled = (socket === null || socket.readyState !== WebSocket.OPEN);
+}
+
+function sendMessage() {
+    if (input.value.trim() === '') {
+        alert("Message cannot be empty!");
+        return;
+    }
+    socket.send(input.value);
+    input.value = '';
+}
+
+function disconnect() {
+    if (socket) {
+        socket.onclose = null;
+        socket.onerror = null;
+        socket.onmessage = null;
+        socket.close();
+        socket = null;
+        status.textContent = "Disconnected.";
+        connectBtn.innerText = "Connect";
+        messages.textContent = '';
+        updateSendButtonState();
+    }
+}
+
+function connect() {
+    try {
+        new URL(url.value); // Validate URL format
+        if (socket === null) {
+            socket = new WebSocket(url.value);
+            socket.onopen = () => {
+                status.textContent = "Connected to " + url.value;
+                connectBtn.innerText = "Close";
+                updateSendButtonState();
+            };
             socket.onmessage = (event) => {
                 const message = document.createElement('p');
                 message.textContent = event.data;
                 messages.appendChild(message);
             };
+            socket.onerror = (error) => {
+                status.textContent = "Error: Unable to connect to " + url.value;
+                console.error("WebSocket error:", error);
+                disconnect();
+            };
+            socket.onclose = () => {
+                disconnect();
+            };
+        } else {
+            disconnect();
         }
-        else
-        {
-            status.textContent = "";
-            messages.textContent='';
-            socket.close();
-            socket = null;
-            connectBtn.innerText = "Connect";
-
-        }
+    } catch (e) {
+        status.textContent = "Invalid WebSocket URL";
     }
+}
   </script>
 </body>
 </html>
